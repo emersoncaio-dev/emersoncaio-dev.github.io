@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
+import { useForm, ValidationError } from '@formspree/react';
 
 /* ============================================
    TYPES
@@ -14,17 +15,27 @@ type L = Record<Lang, string>;
    ANIMATION VARIANTS
    ============================================ */
 const fadeUp = {
-  hidden: { opacity: 0, y: 24 },
+  hidden: { opacity: 0, y: 32 },
   visible: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] as const },
+    transition: { duration: 0.65, ease: [0.16, 1, 0.3, 1] as const },
   },
 };
 
 const stagger = {
   hidden: {},
-  visible: { transition: { staggerChildren: 0.08 } },
+  visible: { transition: { staggerChildren: 0.1, delayChildren: 0.05 } },
+};
+
+const fadeUpCard = {
+  hidden: { opacity: 0, y: 40, scale: 0.97 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] as const },
+  },
 };
 
 /* ============================================
@@ -384,7 +395,7 @@ const socialLinks = [
   },
   {
     label: "LinkedIn",
-    href: "https://linkedin.com/in/emerson-caio",
+    href: "https://linkedin.com/in/emersoncaio-dev",
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
         <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
@@ -456,40 +467,9 @@ export default function Home() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
   // Security Form State
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
+  const [state, handleSubmit] = useForm('mzebbnog');
   
   const t = dict[lang];
-
-  // Honeypot & Rate Limit Handler
-  const handleContactSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (isSubmitting) return;
-
-    const formData = new FormData(e.currentTarget);
-    const honeypot = formData.get("_gotcha");
-    
-    // Bot detectado pelo honeypot
-    if (honeypot) return;
-
-    // Sanitização de XSS básica
-    const name = (formData.get("name") as string) || "";
-    const message = (formData.get("message") as string) || "";
-    if (name.includes("<") || message.includes("<") || message.includes(">")) {
-      return; // Discard silently
-    }
-
-    setIsSubmitting(true);
-    // Simulação do backend
-    setTimeout(() => {
-      setIsSubmitting(false);
-      setSubmitted(true);
-      (e.target as HTMLFormElement).reset();
-      
-      // Cooldown de 5s (Anti-spam client-side)
-      setTimeout(() => setSubmitted(false), 5000);
-    }, 1500);
-  };
 
   /* Lock body scroll when mobile menu open */
   useEffect(() => {
@@ -508,7 +488,7 @@ export default function Home() {
   ];
 
   return (
-    <div className="min-h-screen bg-bg-primary text-text-primary">
+    <div className="min-h-screen bg-bg-primary text-text-primary overflow-x-hidden">
       {/* ============ NAVBAR ============ */}
       <header className="fixed top-0 w-full z-50 bg-bg-primary/80 backdrop-blur-xl border-b border-white/[0.06]">
         <div className="max-w-[var(--spacing-container)] mx-auto px-[var(--spacing-page-x-mobile)] md:px-[var(--spacing-page-x)] flex items-center justify-between h-16 md:h-[72px]">
@@ -682,8 +662,8 @@ export default function Home() {
               <h1 className="text-4xl sm:text-5xl lg:text-[3.8rem] xl:text-[4.2rem] font-extrabold tracking-tight leading-[1.1] text-white">
                 <span className="block text-white mb-2">{t.heroName}</span>
                 <span className="block">
-                  <span className="text-zinc-200 mr-3">{t.heroTitle1}</span>
-                  <span className="bg-gradient-to-r from-orange-400 to-amber-500 bg-clip-text text-transparent filter drop-shadow-[0_0_15px_rgba(251,146,60,0.4)]">
+                  <span className="block md:inline text-zinc-200 mr-0 md:mr-3 mb-2 md:mb-0">{t.heroTitle1}</span>
+                  <span className="block md:inline bg-gradient-to-r from-orange-400 to-amber-500 bg-clip-text text-transparent filter drop-shadow-[0_0_15px_rgba(251,146,60,0.4)]">
                     {t.heroTitle2}
                   </span>
                 </span>
@@ -694,14 +674,13 @@ export default function Home() {
               </p>
             </motion.div>
 
-            {/* Right — Photo */}
             <motion.div
               initial={{ opacity: 0, x: 60 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8, ease: "easeOut", delay: 0.2 }}
-              className="flex justify-center lg:justify-end"
+              className="flex justify-center lg:justify-end w-full"
             >
-              <div className="relative w-[320px] sm:w-[380px] md:w-[440px] lg:w-[500px] xl:w-[540px]">
+              <div className="relative w-full max-w-[300px] sm:max-w-[380px] md:max-w-[440px] lg:w-[500px] xl:w-[540px] mx-auto lg:mx-0">
                 {/* Glow effects specific to the image container */}
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-cyan-500/20 rounded-full blur-3xl -z-10" />
 
@@ -798,7 +777,13 @@ export default function Home() {
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"
           >
             {certifications.map((cert, idx) => (
-              <motion.div key={idx} variants={fadeUp} className="cert-card">
+              <motion.div
+                key={idx}
+                variants={fadeUpCard}
+                whileHover={{ y: -6, scale: 1.02, transition: { duration: 0.25, ease: "easeOut" } }}
+                whileTap={{ scale: 0.98, transition: { duration: 0.15 } }}
+                className="cert-card cursor-default"
+              >
                 <div className="flex items-center justify-between mb-4">
                   {cert.hours && (
                     <span className="text-[11px] font-mono font-bold text-accent tracking-wider">
@@ -848,16 +833,22 @@ export default function Home() {
           </motion.div>
 
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-60px" }}
+            variants={stagger}
             className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-12"
           >
             {projects.map((proj, idx) => (
-              <motion.div key={idx} className="h-full">
-                <SpotlightCard className="h-full group hover:-translate-y-1 transition-all duration-300 rounded-3xl">
-                  <div className="bg-gradient-to-b from-white/[0.04] via-zinc-950/60 to-zinc-950/90 backdrop-blur-md border border-white/[0.08] hover:border-emerald-500/30 rounded-3xl p-7 lg:p-8 flex flex-col justify-between shadow-2xl transition-all duration-300 h-full">
+              <motion.div
+                key={idx}
+                variants={fadeUpCard}
+                whileHover={{ y: -8, scale: 1.015, transition: { duration: 0.3, ease: "easeOut" } }}
+                whileTap={{ scale: 0.985, transition: { duration: 0.15 } }}
+                className="h-full"
+              >
+                <SpotlightCard className="h-full group hover:-translate-y-1 transition-all duration-500 ease-in-out rounded-3xl">
+                  <div className="bg-gradient-to-b from-white/[0.04] via-zinc-950/60 to-zinc-950/90 backdrop-blur-md border border-white/[0.08] hover:border-emerald-500/30 active:border-emerald-500/40 rounded-3xl p-7 lg:p-8 flex flex-col justify-between shadow-2xl hover:shadow-emerald-950/30 transition-all duration-500 ease-in-out h-full">
                     
                     <div>
                       {/* Name */}
@@ -948,7 +939,7 @@ export default function Home() {
             className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start"
           >
             {/* Left Column: Image */}
-            <motion.div variants={fadeUp} className="lg:col-span-5 relative w-full">
+            <motion.div variants={fadeUp} className="lg:col-span-5 relative w-full max-w-sm sm:max-w-md mx-auto lg:max-w-none">
               <div className="w-full h-auto rounded-2xl overflow-hidden border border-white/10 shadow-2xl bg-zinc-950/40 flex items-center justify-center">
                 <Image
                   src="/cybersecurity-laptop.jpg"
@@ -964,7 +955,16 @@ export default function Home() {
             <motion.div variants={fadeUp} className="lg:col-span-7">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {stackCategories.map((cat, catIdx) => (
-                  <div key={catIdx} className="bg-white/[0.02] border border-white/[0.04] p-6 rounded-2xl flex flex-col h-full hover:border-white/10 transition-colors">
+                  <motion.div
+                    key={catIdx}
+                    initial={{ opacity: 0, y: 24 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.5, delay: catIdx * 0.08, ease: [0.16, 1, 0.3, 1] }}
+                    whileHover={{ y: -4, scale: 1.015, transition: { duration: 0.25, ease: "easeOut" } }}
+                    whileTap={{ scale: 0.985, transition: { duration: 0.15 } }}
+                    className="bg-white/[0.02] border border-white/[0.04] p-6 rounded-2xl flex flex-col h-full hover:border-white/10 hover:bg-white/[0.04] hover:shadow-lg hover:shadow-black/20 transition-all duration-500 ease-in-out cursor-default"
+                  >
                     <h3 className="text-sm font-semibold text-white tracking-tight mb-4">
                       {cat.label[lang]}
                     </h3>
@@ -972,13 +972,13 @@ export default function Home() {
                       {cat.items.map((item) => (
                         <span
                           key={item}
-                          className="bg-white/[0.04] hover:bg-emerald-500/10 border border-white/5 hover:border-emerald-500/30 text-zinc-300 text-xs font-mono py-1.5 px-3 rounded-lg transition-all cursor-default"
+                          className="bg-white/[0.04] hover:bg-emerald-500/10 active:bg-emerald-500/15 border border-white/5 hover:border-emerald-500/30 text-zinc-300 text-xs font-mono py-1.5 px-3 rounded-lg transition-all duration-300 ease-in-out cursor-default"
                         >
                           {item}
                         </span>
                       ))}
                     </div>
-                  </div>
+                  </motion.div>
                 ))}
               </div>
             </motion.div>
@@ -1012,7 +1012,7 @@ export default function Home() {
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.8, delay: 0.4 }}
-            className="lg:col-span-5 w-full h-full"
+            className="lg:col-span-5 w-full max-w-sm sm:max-w-md mx-auto lg:max-w-none h-full"
           >
             <Image
               src="/emerson-profile-studio.jpg"
@@ -1087,7 +1087,7 @@ export default function Home() {
                     <button
                       key={link.label}
                       onClick={() => {
-                        if (link.b64) window.open(atob(link.b64), link.b64.includes("aHR0c") ? "_blank" : "_self");
+                        if (link.b64) window.open(atob(link.b64), link.b64.includes("aHR0c") ? "_blank" : "_self", "noopener,noreferrer");
                       }}
                       className="group flex w-full items-center gap-4 py-3 border-b border-white/[0.06] hover:border-accent/30 transition-colors duration-300 text-left"
                     >
@@ -1142,12 +1142,17 @@ export default function Home() {
               >
                 {t.contactFormTitle}
               </motion.h3>
+              {state.succeeded ? (
+                <motion.p variants={fadeUp} className="text-zinc-300 text-base leading-relaxed">
+                  Mensagem enviada com sucesso! Obrigado pelo contato.
+                </motion.p>
+              ) : (
               <motion.form
                 variants={fadeUp}
                 className="flex flex-col gap-6"
-                onSubmit={handleContactSubmit}
+                onSubmit={handleSubmit}
               >
-                {/* Honeypot Field */}
+                {/* Honeypot Field — Anti-spam */}
                 <input 
                   type="text" 
                   name="_gotcha" 
@@ -1156,6 +1161,9 @@ export default function Home() {
                   className="opacity-0 absolute -z-10 h-0 w-0" 
                   aria-hidden="true" 
                 />
+                {/* Formspree: redirect após envio */}
+                <input type="hidden" name="_next" value="" />
+                <input type="hidden" name="_subject" value="Nova mensagem do Portfólio — Emerson Caio" />
                 
                 <div>
                   <label
@@ -1188,6 +1196,7 @@ export default function Home() {
                     className="w-full bg-transparent border-b border-white/[0.08] text-white py-3 text-sm focus:outline-none focus:border-accent transition-colors"
                     placeholder="—"
                   />
+                  <ValidationError prefix="Email" field="email" errors={state.errors} className="text-red-500 text-xs mt-1 block" />
                 </div>
                 <div>
                   <label
@@ -1204,10 +1213,11 @@ export default function Home() {
                     className="w-full bg-transparent border-b border-white/[0.08] text-white py-3 text-sm focus:outline-none focus:border-accent transition-colors resize-none"
                     placeholder="—"
                   />
+                  <ValidationError prefix="Message" field="message" errors={state.errors} className="text-red-500 text-xs mt-1 block" />
                 </div>
-                <button type="submit" disabled={isSubmitting} className="btn-primary self-start mt-2 disabled:opacity-50 transition-all">
-                  {isSubmitting ? "Enviando..." : submitted ? "Mensagem Enviada!" : t.contactSend}
-                  {!isSubmitting && !submitted && (
+                <button type="submit" disabled={state.submitting} className="btn-primary self-start mt-2 disabled:opacity-50 transition-all">
+                  {state.submitting ? "Enviando..." : t.contactSend}
+                  {!state.submitting && (
                     <svg
                       width="16"
                       height="16"
@@ -1224,6 +1234,7 @@ export default function Home() {
                   )}
                 </button>
               </motion.form>
+              )}
             </motion.div>
           </div>
         </div>
@@ -1272,7 +1283,7 @@ export default function Home() {
               ))}
             </div>
             <span className="text-[12px] text-text-secondary">
-              © {new Date().getFullYear()} · {t.footerRights}
+              © 2026 Emerson Caio. Todos os direitos reservados.
             </span>
           </div>
         </div>
